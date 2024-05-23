@@ -22,17 +22,12 @@
     }
   ],
   "topbarCtaButton": {
-    "name": "Dashboard",
-    "url": "https://dashboard.mintlify.com"
+    "name": "Website",
+    "url": "https://rwalayer.com"
   },
   "tabs": [
   ],
   "anchors": [
-    {
-      "name": "Website",
-      "icon": "book-open-cover",
-      "url": "https://rwalayer.com"
-    }
   ],
   "navigation": [
     {
