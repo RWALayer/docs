@@ -38,5 +38,10 @@
     }
   ],
   "footerSocials": {
+  },
+  "metadata": {
+    "og:image": "https://mintlify.s3-us-west-1.amazonaws.com/rwalayer/images/rwalayer.jpg",
+    "og:title": "RWALayer documentation",
+    "og:description": "RWALayer is a blockchain network that enables dual yield."
   }
 }
