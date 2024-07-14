@@ -1,0 +1,58 @@
+---
+title: Providers
+description: 'You can connect to RWALayer using either web3 or ethers library as described below.'
+---
+
+<Tabs>
+    <Tab title="ethers.js">
+
+        # Ethers - Testnet
+        <Tabs>
+            <Tab title="javascript">
+                ```javascript
+                const ethers = require('ethers'); // ethers v6
+
+                const url = 'https://rpc.rwalayer.com/';
+                const provider = new ethers.JsonRpcProvider(url);
+                ```
+            </Tab>
+            <Tab title="typescript">
+                ```typescript
+                import 'ethers' from 'ethers'; // ethers v6
+
+                const url = 'https://rpc.rwalayer.com/';
+                const provider = new ethers.JsonRpcProvider(url);
+                ```
+            </Tab>
+        </Tabs>
+
+        See [Ethers documentation](https://docs.ethers.org/v6/api/providers/jsonrpc/) for additional information.
+
+    </Tab>
+    <Tab title="web3.js">
+
+        # Web3 - Testnet
+
+        <Tabs>
+            <Tab title="javascript">
+                ```javascript
+                const { Web3 } = require('web3');
+
+                const web3 = new Web3('https://rpc.rwalayer.com/');
+                ```
+            </Tab>
+            <Tab title="typescript">
+                ```typescript
+                import 'Web3' from 'web3';
+
+                const web3 = new Web3('https://rpc.rwalayer.com/');
+                ```
+            </Tab>
+        </Tabs>
+
+        See [Web3 documentation](https://web3js.readthedocs.io/en/v1.2.11/web3.html#providers) for additional
+        information.
+
+
+    </Tab>
+</Tabs>

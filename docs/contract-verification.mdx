@@ -1,0 +1,131 @@
+---
+title: "Contract Verification"
+---
+Verifying your smart contracts on RWALayer is a crucial step to ensure transparency and trust. RWALayer supports
+verification through popular tools like `Hardhat` and `Foundry`. Below is a comprehensive guide to help you navigate
+the verification process using these tools.
+
+<Callout type="warning" title="API Key Placeholder">
+    `forge` requires a value for the `--etherscan-api-key` option even if a valid API key is not necessary. You can use
+    a placeholder in such cases.
+</Callout>
+
+## Configuring Verification Endpoints
+
+It’s crucial to direct your verification requests to the appropriate API endpoint. For Hardhat, this is configured in
+the `apiUrl` within your settings. For Foundry, you need to specify this via the `--verifier-url` in your forge command:
+
+| Explorer                        | Testnet Endpoint               |
+| ------------------------------- | ------------------------------ |
+| https://explorer.rwalayer.com   | `https://rpc.rwalayer.com/`    |
+
+## Contract verification using Foundry
+
+To verify your contracts during deployment or for an existing deployment using Foundry, follow these steps:
+
+```bash
+# Verification during deployment
+forge script <deploy-script> \
+    --verify --verifier-url <verification-endpoint> \
+    --etherscan-api-key <api-key> --rpc-url <rpc-url> \
+    --verify --broadcast -vvvv
+```
+
+```bash
+# Verification of an existing contract
+forge verify-contract <address> <contract> \
+    --verifier-url <verification-endpoint> \
+    --etherscan-api-key <api-key> --watch
+```
+
+## Contract verification using Hardhat
+
+For Hardhat users, successful contract verification involves proper configuration of your `hardhat.config.ts` or
+`hardhat.config.js` file. This includes setting up the networks and etherscan properties.
+
+<Tabs>
+    <Tab title="Config">
+        <CodeGroup>
+            ```typescript hardhat.config.ts
+
+            import { HardhatUserConfig } from "hardhat/config";
+            import "@nomicfoundation/hardhat-toolbox";
+            import "@nomicfoundation/hardhat-ignition-ethers";
+            import { vars } from "hardhat/config";
+
+            const PRIVATE_KEY = vars.get("PRIVATE_KEY");
+
+            const config: HardhatUserConfig = {
+              solidity: "0.8.24",
+              networks: {
+                "rwalayer-testnet": {
+                url: "https://rpc.rwalayer.com/",
+                accounts: [PRIVATE_KEY]
+                }
+              },
+              etherscan: {
+                apiKey: API_KEY,
+                customChains: [
+                  {
+                    network: "rwalayer-testnet",
+                    chainId: 3549,
+                    urls: {
+                      apiURL: <verification-endpoint>,
+                      browserURL: <explorer-url>
+                    }
+                  }
+                ],
+                enabled: true
+              }
+            };
+
+            export default config;
+            ```
+
+            ``` javascript hardhat.config.js
+
+            require("@nomicfoundation/hardhat-toolbox");
+            require("@nomicfoundation/hardhat-toolbox");
+            require("@nomicfoundation/hardhat-ignition-ethers");
+            const { vars } =  require("hardhat/config");
+
+            const PRIVATE_KEY = vars.get("PRIVATE_KEY");
+
+            module.exports = {
+              solidity: "0.8.24",
+              networks: {
+                "rwalayer-testnet": {
+                url: "https://rpc.rwalayer.com/",
+                accounts: [PRIVATE_KEY]
+                }
+              },
+              etherscan: {
+                apiKey: API_KEY,
+                customChains: [
+                  {
+                    network: "rwalayer-testnet",
+                    chainId: 3549,
+                    urls: {
+                      apiURL: <verification-endpoint>,
+                      browserURL: <explorer-url>
+                    }
+                  }
+                ],
+                enabled: true
+              }
+            };
+            ```
+        </CodeGroup>
+    </Tab>
+    <Tab title="During Deployment">
+        ```bash
+        npx hardhat ignition deploy ignition/modules/Example.ts \
+          --network <network> --verify
+        ```
+    </Tab>
+    <Tab title="After Deployment">
+        ```bash
+        npx hardhat verify <address> --network <network>
+        ```
+    </Tab>
+</Tabs>

@@ -1,0 +1,130 @@
+---
+title: "ETH Yield"
+---
+
+
+# RWALayer Dual Yield Overview
+
+RWALayer offers a dual yield system for assets bridged from Ethereum, allowing users and smart contracts to earn yields
+through auto-rebasing and real-world assets (RWA).
+
+## Yield Generation
+
+Bridged assets on RWALayer generate yield through:
+
+1. **Auto Rebasing:** Yield from L1 ETH native staking via Lido, T-bill yield from MakerDAO, and native staking of
+BNB & CAKE.
+2. **Real World Assets (RWA):** Yield from RWALayer ecosystem protocols covering property, commodities, private credit,
+and future developments.
+
+Key features include:
+- **Auto Rebasing Yield:** Credited on-chain every 7 days.
+- **XUSD Stablecoin:** After bridging USDT, users receive XUSD which auto-rebases yield from MakerDAO’s Treasury Bill
+protocol. XUSD can be redeemed for DAI when bridging back.
+- **Monitoring:** Track dual yield progress via the RWALayer App.
+
+## Yield Modes for Smart Contracts
+
+Smart contract accounts on RWALayer can choose from three yield modes:
+1. **Void (DEFAULT):** No yield; ETH balance remains constant.
+2. **Automatic:** ETH balance increases automatically.
+3. **Claimable:** Yield accumulates separately and can be claimed.
+
+### Configuring Yield Modes
+
+To change yield modes, smart contracts must interact with the RWALayer yield contract.
+
+## Yield Mode Details
+
+### Void Yield (DEFAULT)
+
+Ensures compatibility with existing Ethereum Mainnet and other EVM-compatible dapps, requiring no modifications.
+
+### Automatic Yield
+
+Depositing 1 ETH results in an increase to approximately 1.04 ETH after a year. Suitable for dapps that want to pass
+yield benefits directly to users.
+
+```solidity
+interface IRWALayer {
+    // Interface methods
+}
+
+contract MyContract {
+    constructor() {
+        IRWALayer(<yieldContractAddress>).configureAutomaticYield(); // Enables automatic yield
+    }
+}
+```
+
+### Claimable Yield
+
+ETH balance remains unchanged, but yield accumulates separately and can be claimed.
+
+```solidity
+interface IRWALayer {
+    // Interface methods
+}
+
+contract MyContract {
+    constructor() {
+        IRWALayer(<yieldContractAddress>).configureClaimableYield();
+    }
+
+    function claimYield(address recipient, uint256 amount) external {
+        IRWALayer(<yieldContractAddress>).claimYield(address(this), recipient, amount);
+    }
+
+    function claimAllYield(address recipient) external {
+        IRWALayer(<yieldContractAddress>).claimAllYield(address(this), recipient);
+    }
+}
+```
+
+## Managing Governors
+
+The governor is responsible for claiming a contract’s yield and gas. Initially, the contract’s address is the governor
+but can be updated.
+
+```solidity
+interface IRWALayer {
+    // Interface methods
+}
+
+contract MyContract {
+    constructor(address gov) {
+        IRWALayer(<yieldContractAddress>).configureClaimableYield();
+        IRWALayer(<yieldContractAddress>).configureGovernor(gov); // Sets the governor address
+    }
+}
+```
+
+## Claiming Yield and Gas
+
+Efficient management of yield and gas claims maximizes earnings and resource management.
+
+### Claiming Yield
+
+Yield in Claimable mode can be claimed manually:
+
+```solidity
+function claimYield(address recipient, uint256 amount) external {
+    IRWALayer(<yieldContractAddress>).claimYield(address(this), recipient, amount);
+}
+
+function claimAllYield(address recipient) external {
+    IRWALayer(<yieldContractAddress>).claimAllYield(address(this), recipient);
+}
+```
+
+### Claiming Gas
+
+Configure and claim gas for managing operational costs, similar to claiming yield.
+
+## Monitoring Yield
+
+Users can monitor their yield progress via the RWALayer App, ensuring they have up-to-date information on their
+earnings.
+
+By following these configurations and guidelines, you can effectively manage yield and gas for your smart contracts on
+RWALayer, leveraging the dual yield system to maximize your returns.

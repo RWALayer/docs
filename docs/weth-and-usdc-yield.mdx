@@ -1,0 +1,98 @@
+---
+title: WETH and USDC Yield
+description: 'RWALayer supports rebasing for WETH and USDC, similar to ETH, but with a key difference in their default
+yield modes. For both EOAs and smart contracts, WETH and USDC accounts default to Automatic yield mode, whereas ETH
+accounts default to Disabled yield mode.'
+---
+
+### Configuring Yield Modes
+
+Users can change the yield mode of their WETH and USDC accounts by calling the `configure` function on the relevant
+token address.
+
+```solidity
+enum YieldMode {
+  AUTOMATIC,
+  VOID,
+  CLAIMABLE
+}
+
+interface IERC20Rebasing {
+  function configure(YieldMode) external returns (uint256);
+  function claim(address recipient, uint256 amount) external returns (uint256);
+  function getClaimableAmount(address account) external view returns (uint256);
+}
+
+contract MyContract {
+  IERC20Rebasing public constant USDC = IERC20Rebasing(`usdc_contract_address`);
+  IERC20Rebasing public constant WETH = IERC20Rebasing(`weth_contract_address`);
+
+  constructor() {
+    USDC.configure(YieldMode.CLAIMABLE); // Configure claimable yield for USDC
+    WETH.configure(YieldMode.CLAIMABLE); // Configure claimable yield for WETH
+  }
+}
+```
+
+## Non-Rebasing Tokens
+
+For applications seeking stable yield exposure, non-rebasing nrETH and nrUSDC tokens wrap ETH/WETH and USDC at their
+current value, allowing later unwrapping to redeem their rebased value.
+
+```solidity
+interface INrETH {
+  receive() external payable;
+  function wrap(uint256 _amount) external returns (uint256);
+  function unwrap(uint256 _shares) external returns (uint256);
+}
+
+interface INrUSDC {
+  function wrap(uint256 _amount) external returns (uint256);
+  function unwrap(uint256 _shares) external returns (uint256);
+}
+```
+
+# Claiming WETH
+
+<Tabs>
+<Tab title="Testnet">
+To convert ETH to WETH on the RWALayer Sepolia Testnet, send ETH to the WETH contract address on L2. Ensure not
+to send funds to this address on the Sepolia L1.
+</Tab>
+</Tabs>
+
+# Claiming USDC
+
+<Tabs>
+<Tab title="Testnet">
+On Sepolia L1, use the mock USD token by calling the `mint` function to receive up to $10,000 mock USD per call.
+
+```bash
+cast send --rpc-url=https://rpc.sepolia.org \
+  --private-key=$PRIV_KEY \
+  $mockUSDAddress \
+  "mint(address,uint256)" $ADDR 1000000000000000000000
+```
+
+Approve the L1 RWALayer Bridge contract to transfer your mock USD tokens:
+
+```bash
+cast send --rpc-url=https://rpc.sepolia.org \
+  --private-key=$PRIV_KEY \
+  $mockUSDAddress \
+  "approve(address,uint256)" $L1Bridge 1000000000000000000000
+```
+
+Bridge the tokens to L2:
+
+```bash
+cast send --rpc-url=https://rpc.sepolia.org \
+  --private-key=$PRIV_KEY --gas-limit 500000 \
+  $L1Bridge \
+  "bridgeERC20(address localToken,address remoteToken,uint256 amount,uint32,bytes)" \
+  $localTokenAddress \
+  $remoteTokenAddress \
+  1000000000000000000000 500000 0x
+```
+</Tab>
+</Tabs>

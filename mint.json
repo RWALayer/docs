@@ -25,15 +25,43 @@
     "name": "Website",
     "url": "https://rwalayer.com"
   },
-  "tabs": [
-  ],
+  "topAnchor": {
+    "name": "Documentation",
+    "icon": "download"
+  },
   "anchors": [
+    {
+      "name": "Brand guidelines",
+      "icon": "book",
+      "url": "https://docs.rwalayer.com/assets/rwa_guidelines.pdf"
+    }
   ],
   "navigation": [
     {
       "group": "Get Started",
       "pages": [
-        "introduction"
+        "docs/about-rwalayer",
+        "docs/rwa-drivers"
+      ]
+    },
+    {
+      "group": "Technical Overview",
+      "pages": [
+        "docs/basics",
+        "docs/chain-contracts",
+        "docs/token-bridging",
+        "docs/gasless-transactions",
+        "docs/transaction-states",
+        "docs/contract-verification",
+        "docs/providers",
+        {
+          "group": "Yield Generation",
+          "pages": [
+            "docs/eth-yield",
+            "docs/weth-and-usdc-yield"
+          ]
+        },
+        "docs/account-management"
       ]
     }
   ],

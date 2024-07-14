@@ -1,0 +1,176 @@
+---
+title: "Account Management"
+---
+
+To build a product that indexes ETH balances on RWALayer, it’s essential to understand RWALayer’s unique account model.
+Unlike other EVM chains, RWALayer represents ETH balances in terms of **shares**. Each account has a certain number of
+shares, which are multiplied by a **global share** price to determine its ETH balance. This method allows account
+balances to automatically rebase as new yield is reported and the global share price increases.
+
+For accurate indexing, save individual account shares and the global share price instead of the direct account
+balances. At read time, an account’s balance can be derived by multiplying its shares with the global share price.
+
+<Info>
+    This document details how to accurately index every account’s ETH balance on RWALayer using this approach.
+</Info>
+
+# Yield Modes Explained
+
+RWALayer accounts offer three different yield modes, providing users and developers with control over rebasing when new
+yield is reported:
+
+<StepGroup>
+  <Step title="AUTOMATIC">
+    ETH balance automatically rebases (increasing only).
+  </Step>
+  <Step title="VOID">
+    ETH balance never changes in response to yield; no yield is earned.
+  </Step>
+  <Step title="CLAIMABLE">
+    Yield accumulates separately and can be claimed to any recipient address.
+  </Step>
+</StepGroup>
+
+### Default Settings
+
+By default, all RWALayer accounts are set to `AUTOMATIC` yield mode, meaning their ETH balances will rebase
+automatically. However, when a smart contract is deployed to an address, the account switches to `VOID` mode. This
+means that smart contract accounts default to `VOID` mode, while EOAs (Externally Owned Accounts) default to
+`AUTOMATIC` mode.
+
+<Info type="warning">
+    It’s possible (though uncommon) for ETH to be held by an account before a smart contract is deployed to it.
+</Info>
+
+Both smart contracts and EOAs can change their yield modes (e.g., a smart contract opting in or an EOA opting out).
+
+## RWALayer’s Account Model
+
+RWALayer employs a modified version of `op-geth` (`RWALayer-geth`) to represent balances in shares, enabling all
+accounts to update as yield is reported. Specifically, `RWALayer-geth` modifies the `StateAccount` struct to achieve
+this:
+
+<CardGroup cols={2}>
+  <Card title="op-geth (Upstream)">
+    ```git
+    type StateAccount struct {
+      Nonce    uint64
+      Root     common.Hash
+      CodeHash []byte
+      Balance  *big.Int
+    }
+    ```
+  </Card>
+  <Card title="RWALayer-geth">
+    ```git
+    type StateAccount struct {
+      Nonce     uint64
+      Root      common.Hash
+      CodeHash  []byte
+      Flags     uint8
+      Fixed     *big.Int
+      Shares    *big.Int
+      Remainder *big.Int
+    }
+    ```
+  </Card>
+</CardGroup>
+
+The desired yield mode is stored in the `Flags` field, while the `Fixed`, `Shares`, and `Remainder` fields store the
+data required to calculate account balances in each yield mode:
+
+<Expandable title="AUTOMATIC Mode">
+  In `AUTOMATIC` mode, balances increase automatically as yield is reported to the L2:
+
+  ```
+  balance = account.shares * sharePrice + account.remainder
+  claimable = 0
+  ```
+
+  `account.remainder` is a small value to ensure wei-level precision.
+
+  <Note>
+    `account.remainder` will always be less than `sharePrice`, otherwise `account.shares` would be higher.
+  </Note>
+</Expandable>
+
+<Expandable title="VOID Mode">
+  In `VOID` mode, the balance remains static and no yield can be claimed:
+
+  ```
+  balance = account.fixed
+  claimable = 0
+  ```
+</Expandable>
+
+<Expandable title="CLAIMABLE Mode">
+  In `CLAIMABLE` mode, yield accumulates separately and can be claimed by the account’s governor to any recipient
+  address:
+
+  ```
+  balance = account.fixed
+  claimable = account.shares * sharePrice + account.remainder - account.fixed
+  ```
+
+  The `claimable` value refers to the yield that can be claimed.
+
+  <Alert type="warning">
+    No `Transfer` event is emitted when yield is claimed, which can sometimes lead to confusion.
+  </Alert>
+</Expandable>
+
+## Global Share Price
+
+The global share price that determines how much ETH each share is worth is stored in the SharesBase predeploy at.
+This contract tracks the share price, the total number of shares, and the total amount of ETH yet to be
+reflected in the share price. You can read the current ETH share price by calling the `price()` function on this
+contract.
+
+## Indexing Account Shares
+
+For accurate results, index account shares instead of account balances directly. This works similarly to indexing
+balances on ETH mainnet: identify which accounts were touched in transactions within a given block and re-fetch their
+balances on that block.
+
+RWALayer nodes expose a new RPC method, `eth_getBalanceValues`, to support indexing the `flags`, `shares`, `remainder`,
+and `fixed` fields for accounts.
+
+### `eth_getBalanceValues` Request
+
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "eth_getBalanceValues",
+  "params": ["<address>", "latest"],
+  "id": 1
+}
+```
+
+### `eth_getBalanceValues` Response
+
+```json
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "fixed": "0x0",
+    "flags": "0x1",
+    "remainder": "0x0",
+    "shares": "0x0"
+  },
+  "id": 1
+}
+```
+
+## Edge Cases
+
+On Ethereum mainnet, `selfdestruct` allows ETH to be sent to a beneficiary address without triggering any code at that
+address. As a result, the beneficiary account’s balance changes without there being any `call` made. Indexers must
+handle this edge case to ensure perfect accounting.
+
+RWALayer introduces a similar edge case that indexers should be aware of. Accounts set to `CLAIMABLE` yield mode can
+claim accumulated yield to an arbitrary beneficiary address. This claim operation works the same as `selfdestruct` in
+that it can increase an arbitrary account’s balance without a `call`.
+
+<Alert type="info">
+While this edge case is exceptionally rare and not particularly important to handle, we include it here for completeness.
+</Alert>

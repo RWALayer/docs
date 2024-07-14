@@ -1,0 +1,56 @@
+---
+title: "Transaction States"
+---
+
+In RWALayer, transactions progress through distinct states, each pivotal for transaction execution and blockchain
+integrity. The following steps outline the journey from sending a transaction to its finalization.
+
+<Steps>
+  <Step title="Initiate Transaction">
+    **Action**: A user initiates a transaction on the RWALayer network.
+
+    **State**: Pending Confirmation
+
+    Upon initiation, transactions enter a pending state, awaiting confirmation. This preliminary phase denotes the
+    transaction's initiation.
+
+    **How to Track**: Access pending transactions through RWALayer's monitoring tools or use the JSON-RPC method
+    `eth_getBlockByNumber` with the block number parameter set to `pending`.
+  </Step>
+  <Step title="Sequencer Validation">
+    **Action**: The transaction is processed by the Sequencer.
+
+    **State**: Sequencer Validation
+
+    Transactions successfully validated by the Sequencer are marked as "sequencer confirmed" or "unsafe." While
+    included in a block, these transactions remain subject to further validation before blockchain confirmation.
+
+    **How to Track**: Monitor the latest "sequencer validated" block using `eth_getBlockByNumber` with the block number
+    parameter set to `safe`.
+  </Step>
+  <Step title="Blockchain Confirmation">
+    **Action**: The transaction is confirmed on the blockchain.
+
+    **State**: Blockchain Confirmation
+
+    Upon confirmation on the blockchain, transactions achieve "blockchain confirmed" status, signifying inclusion in a
+    block pending publication to the broader network. Despite progress, uncertainties persist due to re-org.
+
+    **How to Track**: Query the latest "blockchain confirmed" block using `eth_getBlockByNumber` with the parameter
+    set to `safe`.
+  </Step>
+  <Step title="Finalization">
+    **Action**: The transaction is finalized and embedded in the blockchain.
+
+    **State**: Finalization
+
+    Finalized transactions are securely embedded within the blockchain, representing completed actions within
+    RWALayer's immutable ledger. With all uncertainties dispelled, finalized transactions ensure data integrity
+    and transactional certainty.
+
+    **How to Track**: Stay updated on finalized transactions through RWALayer's interface or `eth_getBlockByNumber`
+    with the parameter set to `finalized`.
+  </Step>
+</Steps>
+
+Understanding these transaction states is fundamental for effective transaction management within RWALayer.
